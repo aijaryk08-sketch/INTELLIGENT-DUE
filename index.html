@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ким миллионер болгусу келет?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle, #0f172a, #1e1b4b, #312e81);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .option-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: linear-gradient(90deg, #1e40af, #3b82f6);
+            transform: translateY(-2px);
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .option-correct {
+            background: linear-gradient(90deg, #059669, #10b981) !important;
+            border-color: #34d399 !important;
+            animation: success-pulse 0.4s ease-in-out;
+        }
+
+        .option-wrong {
+            background: linear-gradient(90deg, #dc2626, #ef4444) !important;
+            border-color: #f87171 !important;
+        }
+
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .lifeline-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid #fbbf24;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .lifeline-btn:hover:not(:disabled) {
+            background: #fbbf24;
+            color: #000;
+        }
+
+        .lifeline-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            border-color: #4b5563;
+        }
+
+        .player-card {
+            border-left: 4px solid transparent;
+            transition: 0.3s;
+        }
+
+        .player-active {
+            border-left-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.15);
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="w-full max-w-5xl p-4">
+    <!-- Башкы меню -->
+    <div id="setup-screen" class="glass-panel p-10 text-center">
+        <h1 class="text-5xl font-extrabold mb-4 text-yellow-400 uppercase tracking-tighter">ИНТЕЛЛЕКТУАЛДЫК ДУЭЛЬ</h1>
+        <p class="text-xl text-blue-200 mb-8 font-light italic">Башкы байге: 5,000,000 сом!</p>
+        
+        <div class="mb-10">
+            <p class="mb-4 text-gray-300">Оюнчулардын санын тандап, кезектешип жооп бериңиздер:</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="startGame(1)" class="option-btn px-8 py-3 rounded-xl font-bold border-2 border-yellow-500/50">1 Оюнчу</button>
+                <button onclick="startGame(2)" class="option-btn px-8 py-3 rounded-xl font-bold border-2 border-yellow-500/50">2 Оюнчу</button>
+                <button onclick="startGame(3)" class="option-btn px-8 py-3 rounded-xl font-bold border-2 border-yellow-500/50">3 Оюнчу</button>
+                <button onclick="startGame(4)" class="option-btn px-8 py-3 rounded-xl font-bold border-2 border-yellow-500/50">4 Оюнчу</button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-400">
+            <div class="p-4 border border-white/10 rounded-lg">30 Татаал суроолор</div>
+            <div class="p-4 border border-white/10 rounded-lg">Кезектешип жооп берүү</div>
+            <div class="p-4 border border-white/10 rounded-lg">Интеллектуалдык рейтинг</div>
+        </div>
+    </div>
+
+    <!-- Оюн талаасы -->
+    <div id="game-screen" class="hidden">
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Оюнчулардын тизмеси -->
+            <div class="lg:w-1/4 flex flex-col gap-3" id="players-list"></div>
+
+            <!-- Суроо жана Жооптор -->
+            <div class="lg:w-3/4 flex flex-col gap-6">
+                <div class="glass-panel p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <span id="current-player-label" class="bg-yellow-500 text-black px-3 py-1 rounded text-xs font-bold uppercase mr-2">ЖҮРҮШ</span>
+                            <span id="current-player-name" class="text-2xl font-bold text-white tracking-wide"></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="help-50" onclick="useLifeline('50')" class="lifeline-btn" title="50/50">50:50</button>
+                            <button id="help-audience" onclick="useLifeline('audience')" class="lifeline-btn" title="Элдик жардам">👥</button>
+                            <button id="help-call" onclick="useLifeline('call')" class="lifeline-btn" title="Досуна чалуу">📞</button>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-10">
+                        <div id="question-level" class="text-blue-400 font-mono text-sm mb-3 tracking-widest uppercase">Деңгээл: 1 / 30</div>
+                        <h2 id="question-text" class="text-2xl md:text-3xl font-bold leading-tight">...</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="options-container">
+                        <button class="option-btn p-5 rounded-2xl text-left flex items-center group" onclick="checkAnswer(0)">
+                            <span class="text-yellow-500 font-black mr-4 group-hover:scale-125 transition">A:</span> <span class="opt-text text-lg">...</span>
+                        </button>
+                        <button class="option-btn p-5 rounded-2xl text-left flex items-center group" onclick="checkAnswer(1)">
+                            <span class="text-yellow-500 font-black mr-4 group-hover:scale-125 transition">B:</span> <span class="opt-text text-lg">...</span>
+                        </button>
+                        <button class="option-btn p-5 rounded-2xl text-left flex items-center group" onclick="checkAnswer(2)">
+                            <span class="text-yellow-500 font-black mr-4 group-hover:scale-125 transition">C:</span> <span class="opt-text text-lg">...</span>
+                        </button>
+                        <button class="option-btn p-5 rounded-2xl text-left flex items-center group" onclick="checkAnswer(3)">
+                            <span class="text-yellow-500 font-black mr-4 group-hover:scale-125 transition">D:</span> <span class="opt-text text-lg">...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Натыйжа экраны -->
+    <div id="result-screen" class="hidden glass-panel p-12 text-center max-w-2xl mx-auto">
+        <div class="mb-6">
+            <span class="text-6xl">🏆</span>
+        </div>
+        <h2 class="text-4xl font-bold mb-2">Оюн Аяктады</h2>
+        <p class="text-gray-400 mb-8">Жыйынтыктар:</p>
+        <div id="final-results" class="mb-10 space-y-4"></div>
+        <button onclick="location.reload()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 px-12 rounded-full transition transform hover:scale-105 uppercase tracking-widest">Жаңы оюн</button>
+    </div>
+</div>
+
+<script>
+    // 30 суроо (Кыйынчылыгы жогорулаган)
+    const questions = [
+        { q: "Кыргыз Республикасынын Мамлекеттик гимнинин сөзүнүн авторлорунун бири ким?", a: ["А. Осмонов", "Ш. Кулуев", "Ж. Садыков", "Т. Кожомбердиев"], c: 2 },
+        { q: "Бишкек шаары мурун кандай аталган эмес?", a: ["Пишпек", "Фрунзе", "Сталинград", "Бишкек"], c: 2 },
+        { q: "Кыргызстандагы эң узун дарыя кайсы?", a: ["Чүй", "Нарын", "Талас", "Кара-Дарыя"], c: 1 },
+        { q: "Манас эпосунда Манастын тулпары Аккуланы кимден сатып алышкан?", a: ["Каныкейден", "Жакыптан", "Ырчы уулдан", "Мейиз аттуу соодагерден"], c: 1 },
+        { q: "Эң биринчи болуп 'Миллионер' шоусу кайсы өлкөдө пайда болгон?", a: ["АКШ", "Улуу Британия", "Германия", "Франция"], c: 1 },
+        { q: "Планеталардын ичинен эң чоңу кайсы?", a: ["Сатурн", "Юпитер", "Нептун", "Марс"], c: 1 },
+        { q: "Күн системасындагы эң ысык планета кайсы?", a: ["Меркурий", "Чолпон (Венера)", "Марс", "Юпитер"], c: 1 },
+        { q: "Кыргызстандын эң бийик жери деңиз деңгээлинен канча метр бийиктикте?", a: ["7134 м", "7439 м", "6995 м", "4012 м"], c: 1 },
+        { q: "Олимпиада оюндарынын желегиндеги беш шакек эмнени түшүндүрөт?", a: ["Беш спорттун түрүн", "Беш континентти", "Беш океанды", "Беш мамлекетти"], c: 1 },
+        { q: "Дүйнөдөгү эң чоң арал кайсы?", a: ["Мадагаскар", "Гренландия", "Исландия", "Суматра"], c: 1 },
+        { q: "Химиялык элементтердин мезгилдик таблицасын ким түзгөн?", a: ["Эйнштейн", "Ньютон", "Менделеев", "Кюри"], c: 2 },
+        { q: "Адамдын жүрөгү бир мүнөттө орточо канча жолу согот?", a: ["40-50", "60-80", "90-110", "120-140"], c: 1 },
+        { q: "Кыргызстандын кайсы жеринде дүйнөдөгү эң чоң жаңгак токою жайгашкан?", a: ["Сары-Челек", "Арсланбоб", "Жети-Өгүз", "Ала-Арча"], c: 1 },
+        { q: "Кайсы жаныбар суу ичпей эле жашай алат?", a: ["Төө", "Кенгуру келемиши", "Пил", "Бегемот"], c: 1 },
+        { q: "Жарыктын ылдамдыгы секундасына болжол менен канча?", a: ["150 000 км/с", "300 000 км/с", "450 000 км/с", "600 000 км/с"], c: 1 },
+        { q: "Египет пирамидаларынын эң чоңу кайсы?", a: ["Хеопс", "Хефрен", "Микерин", "Жосер"], c: 0 },
+        { q: "Төртүнчү агрегаттык абал кандай аталат?", a: ["Буу", "Плазма", "Кристалл", "Эфир"], c: 1 },
+        { q: "Кайсы материкти бир гана мамлекет ээлейт?", a: ["Африка", "Австралия", "Антарктида", "Түштүк Америка"], c: 1 },
+        { q: "Дүйнөдөгү эң узун дубал кайсы өлкөдө?", a: ["Индия", "Кытай", "Рим", "Греция"], c: 1 },
+        { q: "Амазонка дарыясы кайсы континентте жайгашкан?", a: ["Түндүк Америка", "Түштүк Америка", "Африка", "Азия"], c: 1 },
+        { q: "Биринчи дүйнөлүк согуш кайсы жылы башталган?", a: ["1912", "1914", "1918", "1939"], c: 1 },
+        { q: "Кыргыз тили кайсы тилдер тобуна кирет?", a: ["Славян", "Түрк", "Роман", "Индоевропа"], c: 1 },
+        { q: "Адамдын денесиндеги эң кичинекей сөөк кайда жайгашкан?", a: ["Манжада", "Кулакта", "Мурунда", "Тиште"], c: 1 },
+        { q: "Кайсы океан эң чоң жана эң терең?", a: ["Атлантика", "Тынч океан", "Инди океаны", "Түндүк Муз океаны"], c: 1 },
+        { q: "Мона Лиза картинасынын автору ким?", a: ["Микеланджело", "Леонардо да Винчи", "Рафаэль", "Пикассо"], c: 1 },
+        { q: "Жердин атмосферасында кайсы газ эң көп?", a: ["Кычкылтек", "Азот", "Көмүр кычкыл газы", "Водород"], c: 1 },
+        { q: "Кайсы мамлекет 'Күн чыгыш өлкөсү' деп аталат?", a: ["Кытай", "Япония", "Корея", "Вьетнам"], c: 1 },
+        { q: "Эң биринчи программалоо тили кайсы болгон?", a: ["C++", "Fortran", "Python", "Java"], c: 1 },
+        { q: "Ай жерди канча убакытта бир айланып чыгат?", a: ["24 саат", "27.3 күн", "30 күн", "365 күн"], c: 1 },
+        { q: "Кыргызстандын биринчи Президенти ким болгон?", a: ["Р. Отунбаева", "А. Акаев", "К. Бакиев", "А. Атамбаев"], c: 1 }
+    ];
+
+    const moneyLadder = ["0", "1 000", "2 000", "3 000", "5 000", "10 000", "15 000", "20 000", "30 000", "40 000", "50 000", "70 000", "90 000", "120 000", "150 000", "200 000", "300 000", "400 000", "500 000", "700 000", "900 000", "1 200 000", "1 500 000", "1 800 000", "2 200 000", "2 600 000", "3 100 000", "3 600 000", "4 200 000", "4 600 000", "5 000 000"];
+
+    let gameState = {
+        players: [],
+        currentPlayerIndex: 0,
+        currentQuestionIndex: 0,
+        phoneToCall: "996706852491" // Эл аралык форматтагы номериңиз
+    };
+
+    function startGame(count) {
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        for (let i = 0; i < count; i++) {
+            gameState.players.push({
+                id: i,
+                name: `${i + 1}-Оюнчу`,
+                level: 0,
+                lifelines: { '50': true, 'audience': true, 'call': true },
+                active: true
+            });
+        }
+        updateUI();
+        loadQuestion();
+    }
+
+    function updateUI() {
+        const list = document.getElementById('players-list');
+        list.innerHTML = '';
+        gameState.players.forEach((p, idx) => {
+            const div = document.createElement('div');
+            div.className = `player-card p-4 rounded-xl glass-panel text-sm ${idx === gameState.currentPlayerIndex ? 'player-active' : ''} ${!p.active ? 'opacity-30' : ''}`;
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-lg">${p.name}</span>
+                </div>
+                <div class="text-yellow-400 font-mono mt-1">${moneyLadder[p.level]} сом</div>
+                <div class="flex gap-2 mt-2 opacity-70">
+                    <span class="${p.lifelines['50'] ? 'text-green-400' : 'text-red-500'}">½</span>
+                    <span class="${p.lifelines['audience'] ? 'text-green-400' : 'text-red-500'}">👥</span>
+                    <span class="${p.lifelines['call'] ? 'text-green-400' : 'text-red-500'}">📞</span>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+
+        const currentP = gameState.players[gameState.currentPlayerIndex];
+        if (currentP) {
+            document.getElementById('current-player-name').innerText = currentP.name;
+            document.getElementById('help-50').disabled = !currentP.lifelines['50'];
+            document.getElementById('help-audience').disabled = !currentP.lifelines['audience'];
+            document.getElementById('help-call').disabled = !currentP.lifelines['call'];
+        }
+    }
+
+    function loadQuestion() {
+        const activePlayers = gameState.players.filter(p => p.active);
+        if (activePlayers.length === 0 || gameState.currentQuestionIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const qData = questions[gameState.currentQuestionIndex];
+        document.getElementById('question-level').innerText = `Деңгээл: ${gameState.currentQuestionIndex + 1} / 30 (Байге: ${moneyLadder[gameState.currentQuestionIndex + 1]} сом)`;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const btns = document.querySelectorAll('#options-container button');
+        btns.forEach((btn, idx) => {
+            btn.classList.remove('option-correct', 'option-wrong', 'hidden');
+            btn.querySelector('.opt-text').innerText = qData.a[idx];
+            btn.disabled = false;
+        });
+    }
+
+    function checkAnswer(idx) {
+        const qData = questions[gameState.currentQuestionIndex];
+        const btns = document.querySelectorAll('#options-container button');
+        const currentP = gameState.players[gameState.currentPlayerIndex];
+        btns.forEach(b => b.disabled = true);
+
+        if (idx === qData.c) {
+            btns[idx].classList.add('option-correct');
+            setTimeout(() => {
+                currentP.level++;
+                nextTurn(true);
+            }, 1000);
+        } else {
+            btns[idx].classList.add('option-wrong');
+            btns[qData.c].classList.add('option-correct');
+            setTimeout(() => {
+                currentP.active = false;
+                nextTurn(false);
+            }, 1500);
+        }
+    }
+
+    function nextTurn(correct) {
+        let nextIdx = gameState.currentPlayerIndex;
+        let found = false;
+        for (let i = 1; i <= gameState.players.length; i++) {
+            let checkIdx = (gameState.currentPlayerIndex + i) % gameState.players.length;
+            if (gameState.players[checkIdx].active) {
+                nextIdx = checkIdx;
+                found = true;
+                break;
+            }
+        }
+        if (!found) { showResults(); return; }
+        if (correct) gameState.currentQuestionIndex++;
+        gameState.currentPlayerIndex = nextIdx;
+        updateUI();
+        loadQuestion();
+    }
+
+    function useLifeline(type) {
+        const currentP = gameState.players[gameState.currentPlayerIndex];
+        const qData = questions[gameState.currentQuestionIndex];
+        const btns = document.querySelectorAll('#options-container button');
+
+        if (type === '50') {
+            currentP.lifelines['50'] = false;
+            let indices = [0, 1, 2, 3].filter(i => i !== qData.c).sort(() => Math.random() - 0.5);
+            btns[indices[0]].classList.add('hidden');
+            btns[indices[1]].classList.add('hidden');
+        } else if (type === 'audience') {
+            currentP.lifelines['audience'] = false;
+            let message = `Элдин добушу: ${['A', 'B', 'C', 'D'][qData.c]} - 78%, калгандары - 22%.`;
+            showMessage(message);
+        } else if (type === 'call') {
+            currentP.lifelines['call'] = false;
+            
+            // WhatsApp шилтемесин түзүү
+            const text = encodeURIComponent(`Мага жардам керек! Суроо: ${qData.q}. Жооптор: A) ${qData.a[0]}, B) ${qData.a[1]}, C) ${qData.a[2]}, D) ${qData.a[3]}. Сиздин оюңузча кайсынысы туура?`);
+            const waUrl = `https://wa.me/${gameState.phoneToCall}?text=${text}`;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6 text-center';
+            modal.innerHTML = `
+                <div class="glass-panel p-10 max-w-sm w-full border-yellow-500">
+                    <div class="text-4xl mb-4">📞</div>
+                    <p class="text-xl mb-4 font-bold text-yellow-400">Досуңа чалуу</p>
+                    <p class="text-sm text-gray-300 mb-8">WhatsApp аркылуу досуңузга суроону жөнөтүңүз же чалыңыз.</p>
+                    
+                    <a href="${waUrl}" target="_blank" class="block w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-xl mb-4 transition uppercase tracking-widest text-sm">
+                        WhatsApp'тан чалуу
+                    </a>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 text-xs hover:text-white uppercase">Жабуу</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        updateUI();
+    }
+
+    function showMessage(msg) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6 text-center';
+        modal.innerHTML = `
+            <div class="glass-panel p-10 max-w-sm w-full border-yellow-500">
+                <p class="text-xl mb-8 leading-relaxed">${msg}</p>
+                <button onclick="this.parentElement.parentElement.remove()" class="bg-yellow-500 text-black px-10 py-3 rounded-xl font-black uppercase tracking-widest">Түшүндүм</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function showResults() {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        const resultsDiv = document.getElementById('final-results');
+        resultsDiv.innerHTML = '';
+        [...gameState.players].sort((a, b) => b.level - a.level).forEach((p, idx) => {
+            const row = document.createElement('div');
+            row.className = `flex justify-between items-center p-4 rounded-xl bg-white/5`;
+            row.innerHTML = `<span>${p.name}</span> <span class="text-yellow-400 font-bold">${moneyLadder[p.level]} сом</span>`;
+            resultsDiv.appendChild(row);
+        });
+    }
+</script>
+</body>
+</html>
